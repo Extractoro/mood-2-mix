@@ -1,9 +1,16 @@
 import os
 
 import requests
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+from fastapi import APIRouter, Query, HTTPException, Depends, Header
+from fastapi.responses import JSONResponse
+
+from gpt.mood_analyzer import analyze_mood
+from music_providers import SpotifyProvider, PROVIDERS
+from schemas.enums import ProviderEnum
+from schemas.schemas import PlaylistCreation, PlaylistAddition, PromptData, MoodData
+from utils.get_spotify_token_from_header import get_spotify_token_from_header
+from utils.spotify_list_ids import get_spotify_track_uris
 
 router = APIRouter()
 load_dotenv()
@@ -13,7 +20,8 @@ SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 SCOPES = "playlist-modify-public playlist-modify-private"
 
-@router.get("/auth/link", tags=["Auth"])
+
+@router.get("/auth/link")
 async def get_spotify_auth_link():
     auth_url = (
         f'https://accounts.spotify.com/authorize'
@@ -24,7 +32,8 @@ async def get_spotify_auth_link():
     )
     return JSONResponse(content={"url": auth_url})
 
-@router.get("/callback", tags=["Auth"])
+
+@router.get("/callback")
 async def spotify_callback(
         code: str = Query(..., description="Code from the callback URL"),
 ):
@@ -70,3 +79,76 @@ async def spotify_callback(
         "user_id": user["id"],
         "display_name": user.get("display_name")
     })
+
+
+@router.post("/create-playlist")
+def create_playlist(
+        playlist_data: PlaylistCreation,
+        access_token: str = Depends(get_spotify_token_from_header),
+        user_id: str = Header(..., description="Spotify user ID")
+):
+    try:
+        sp = SpotifyProvider(access_token=access_token, user_id=user_id)
+        playlist = sp.create_playlist_with_tracks(**playlist_data.model_dump())
+        return {"playlist": playlist}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{playlist_id}/tracks")
+def add_tracks_to_playlist(
+        playlist_data: PlaylistAddition,
+        access_token: str = Depends(get_spotify_token_from_header),
+        user_id: str = Header(..., description="Spotify user ID")
+):
+    try:
+        sp = SpotifyProvider(access_token=access_token, user_id=user_id)
+
+        spotify_uris = get_spotify_track_uris(sp, playlist_data.track_list, access_token)
+
+        response = requests.post(
+            f'https://api.spotify.com/v1/playlists/{playlist_data.playlist_id}/tracks',
+            headers={'Authorization': f'Bearer {access_token}'},
+            json={'uris': spotify_uris}
+        )
+
+        return response.json()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/prompt-to-playlist")
+async def prompt_to_playlist(
+        data: PromptData,
+        playlist_data_creation: PlaylistCreation,
+        access_token: str = Depends(get_spotify_token_from_header),
+        user_id: str = Header(..., description="Spotify user ID")
+):
+    try:
+        mood_data = await analyze_mood(data.text)
+        mood_data['limit'] = data.limit
+        mood_data = MoodData(**mood_data)
+
+        selected = PROVIDERS.get(ProviderEnum.ytmusic)
+        tracks_list = selected.recommend_tracks(**mood_data.model_dump())
+
+        sp = SpotifyProvider(access_token=access_token, user_id=user_id)
+        playlist_response = sp.create_playlist_with_tracks(**playlist_data_creation.model_dump())
+        playlist_id = playlist_response["id"]
+
+        print(tracks_list)
+
+        spotify_uris = get_spotify_track_uris(sp, tracks_list, access_token)
+
+        requests.post(
+            f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks',
+            headers={'Authorization': f'Bearer {access_token}'},
+            json={'uris': spotify_uris}
+        )
+
+        return {"detail": "Success! Now check your Spotify library."}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

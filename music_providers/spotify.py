@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 
 from music_providers.base import MusicProvider
-from schemas.schemas import TrackData
 
 load_dotenv()
 
@@ -51,7 +50,10 @@ class SpotifyProvider(MusicProvider):
             )
 
             if response.status_code == 401:
-                raise HTTPException(status_code=401, detail="Access token expired. Please reauthorize.")
+                raise HTTPException(
+                    status_code=401,
+                    detail="Access token expired. Please reauthorize."
+                )
 
             if response.status_code != 201:
                 raise HTTPException(status_code=response.status_code, detail=response.json())
@@ -81,7 +83,8 @@ class SpotifyProvider(MusicProvider):
             response = requests.get(url=url, params=params, headers=headers)
 
             if response.status_code == 401:
-                raise HTTPException(status_code=401, detail="Access token expired. Please reauthorize.")
+                raise HTTPException(
+                    status_code=401, detail="Access token expired. Please reauthorize.")
             if response.status_code != 200:
                 return None
 
@@ -89,5 +92,3 @@ class SpotifyProvider(MusicProvider):
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-
-

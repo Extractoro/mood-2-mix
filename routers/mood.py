@@ -30,4 +30,3 @@ async def analyze_and_recommend(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

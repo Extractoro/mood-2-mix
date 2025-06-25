@@ -23,7 +23,8 @@ class MoodData(BaseModel):
 
 class PlaylistCreation(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Playlist name (1–100 chars)")
-    description: str = Field(..., max_length=300, description="Playlist description (max 300 chars)")
+    description: str = Field(
+        ..., max_length=300, description="Playlist description (max 300 chars)")
 
     @field_validator("name", "description", mode="before")
     def strip_whitespace(cls, v: str) -> str:

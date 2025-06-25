@@ -13,7 +13,6 @@ class MusicProvider(ABC):
     ):
         pass
 
-
     @abstractmethod
     def create_playlist_with_tracks(
             self,

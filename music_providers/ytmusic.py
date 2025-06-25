@@ -33,8 +33,9 @@ class YouTubeMusicProvider(MusicProvider):
             "delta waves", "focus", "relax", "raaga", "raag", "mantra", "instrumental", "study",
             "worship", "work", "dj", "royalty", "yoga", "spa", "documentary", "cafe",
             "music for", "bgm", "calm", "cleanmindsounds", "channel", "sound", "everyday",
-            "backing", "track", "progression", "lesson", "loop", "beats", "guitar solo", "guitar backing",
-            "storytelling", "guitar", "chord", "practice", "accompaniment", "vocal removed"
+            "backing", "track", "progression", "lesson", "loop", "beats", "guitar solo",
+            "guitar backing", "storytelling", "guitar",
+            "chord", "practice", "accompaniment", "vocal removed"
         }
 
         if query:
@@ -59,7 +60,9 @@ class YouTubeMusicProvider(MusicProvider):
             title = r["title"].lower()
             artist = r["artists"][0]["name"].lower()
 
-            if any(bad in title for bad in banned_words) or any(bad in artist for bad in banned_words):
+            if any(
+                    bad in title for bad in banned_words) or any(
+                    bad in artist for bad in banned_words):
                 continue
 
             track = {
