@@ -13,6 +13,9 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 async def analyze_mood(prompt: str) -> dict:
     try:
+        if not prompt:
+            raise HTTPException(status_code=500, detail="Empty prompt")
+
         system_msg = (
             "You are a music-oriented emotion analyst. The user provides a free-form emotional"
             "description (in any tone or length).\n"
