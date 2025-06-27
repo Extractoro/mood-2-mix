@@ -40,4 +40,4 @@ class TrackData(BaseModel):
 
 class PlaylistAddition(BaseModel):
     playlist_id: str = Field(..., min_length=1, max_length=100)
-    track_list: List[TrackData]
+    track_list: list[TrackData]

@@ -88,7 +88,11 @@ class SpotifyProvider(MusicProvider):
             if response.status_code != 200:
                 return None
 
-            return response.json()["tracks"]["items"][0]["uri"]
+            result = response.json()["tracks"]["items"]
+            if not result:
+                return None  # или логируй, что не нашли ничего
+            return result[0]["uri"]
+
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

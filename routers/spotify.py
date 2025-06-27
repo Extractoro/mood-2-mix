@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from gpt.mood_analyzer import analyze_mood
 from music_providers import SpotifyProvider, PROVIDERS
 from schemas.enums import ProviderEnum
-from schemas.schemas import PlaylistCreation, PlaylistAddition, PromptData, MoodData
+from schemas.schemas import PlaylistCreation, PlaylistAddition, PromptData, MoodData, TrackData
 from utils.get_spotify_token_from_header import get_spotify_token_from_header
 from utils.spotify_list_ids import get_spotify_track_uris
 
@@ -104,7 +104,7 @@ def add_tracks_to_playlist(
 ):
     try:
         sp = SpotifyProvider(access_token=access_token, user_id=user_id)
-
+        print(playlist_data.track_list)
         spotify_uris = get_spotify_track_uris(sp, playlist_data.track_list, access_token)
 
         response = requests.post(
@@ -133,14 +133,16 @@ async def prompt_to_playlist(
 
         selected = PROVIDERS.get(ProviderEnum.ytmusic)
         tracks_list = selected.recommend_tracks(**mood_data.model_dump())
+        track_objects = [TrackData(**track) for track in tracks_list]
 
         sp = SpotifyProvider(access_token=access_token, user_id=user_id)
         playlist_response = sp.create_playlist_with_tracks(**playlist_data_creation.model_dump())
         playlist_id = playlist_response["id"]
+        playlist_url = playlist_response["external_urls"]["spotify"]
 
-        print(tracks_list)
+        print(track_objects)
 
-        spotify_uris = get_spotify_track_uris(sp, tracks_list, access_token)
+        spotify_uris = get_spotify_track_uris(sp, track_objects, access_token)
 
         requests.post(
             f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks',
@@ -148,7 +150,7 @@ async def prompt_to_playlist(
             json={'uris': spotify_uris}
         )
 
-        return {"detail": "Success! Now check your Spotify library."}
+        return {"detail": "Success! Now check your Spotify library.", "playlist_url": playlist_url}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
