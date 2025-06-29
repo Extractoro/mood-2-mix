@@ -22,7 +22,14 @@ async def test_create_spotify_playlist():
     mock_response = {
         "id": "playlist123",
         "name": "Test Playlist",
-        "description": "Created in test"
+        "description": "Created in test",
+        "collaborative": False,
+        "external_urls": {"spotify": "https://open.spotify.com/playlist/playlist123"},
+        "href": "https://api.spotify.com/v1/playlists/playlist123",
+        "type": "playlist",
+        "uri": "spotify:playlist:playlist123",
+        "public": True,
+        "snapshot_id": "mock_snapshot_id"
     }
 
     with patch("music_providers.spotify.requests.post") as mock_post:
