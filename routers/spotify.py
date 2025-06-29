@@ -8,7 +8,9 @@ from fastapi.responses import JSONResponse
 from gpt.mood_analyzer import analyze_mood
 from music_providers import SpotifyProvider, PROVIDERS
 from schemas.enums import ProviderEnum
-from schemas.schemas import PlaylistCreation, PlaylistAddition, PromptData, MoodData, TrackData
+from schemas.schemas import PlaylistCreation, PlaylistAddition, PromptData, MoodData, TrackData, \
+    SpotifyAuthLinkResponse, SpotifyCallbackResponse, PlaylistCreationResponse, \
+    PlaylistPromptToPlaylistResponse, PlaylistAdditionResponse
 from utils.get_spotify_token_from_header import get_spotify_token_from_header
 from utils.spotify_list_ids import get_spotify_track_uris
 
@@ -21,7 +23,7 @@ REDIRECT_URI = os.getenv("REDIRECT_URI")
 SCOPES = "playlist-modify-public playlist-modify-private"
 
 
-@router.get("/auth/link")
+@router.get("/auth/link", response_model=SpotifyAuthLinkResponse)
 async def get_spotify_auth_link():
     auth_url = (
         f'https://accounts.spotify.com/authorize'
@@ -33,7 +35,7 @@ async def get_spotify_auth_link():
     return JSONResponse(content={"url": auth_url})
 
 
-@router.get("/callback")
+@router.get("/callback", response_model=SpotifyCallbackResponse)
 async def spotify_callback(
         code: str = Query(..., description="Code from the callback URL"),
 ):
@@ -81,7 +83,7 @@ async def spotify_callback(
     })
 
 
-@router.post("/create-playlist")
+@router.post("/create-playlist", response_model=PlaylistCreationResponse)
 def create_playlist(
         playlist_data: PlaylistCreation,
         access_token: str = Depends(get_spotify_token_from_header),
@@ -96,7 +98,7 @@ def create_playlist(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{playlist_id}/tracks")
+@router.post("/{playlist_id}/tracks", response_model=PlaylistAdditionResponse)
 def add_tracks_to_playlist(
         playlist_data: PlaylistAddition,
         access_token: str = Depends(get_spotify_token_from_header),
@@ -119,7 +121,7 @@ def add_tracks_to_playlist(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/prompt-to-playlist")
+@router.post("/prompt-to-playlist", response_model=PlaylistPromptToPlaylistResponse)
 async def prompt_to_playlist(
         data: PromptData,
         playlist_data_creation: PlaylistCreation,

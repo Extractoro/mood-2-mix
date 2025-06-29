@@ -106,7 +106,10 @@ class YouTubeMusicProvider(MusicProvider):
             title = r["title"].strip().lower()
             artist = r["artists"][0]["name"].strip().lower()
 
-            if contains_banned_word(title, banned_words) or contains_banned_word(artist, banned_words):
+            if (
+                    contains_banned_word(title, banned_words)
+                    or contains_banned_word(artist, banned_words)
+            ):
                 print(f"Filtered by keyword: {title} – {artist}")
                 continue
 

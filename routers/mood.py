@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query, HTTPException
 
-from schemas.schemas import PromptRequest
+from schemas.schemas import PromptRequest, MoodAnalyzeResponse, MoodAnalyzeRecommendResponse
 from gpt.mood_analyzer import analyze_mood
 from music_providers import PROVIDERS
 from schemas.enums import ProviderEnum
@@ -8,12 +8,12 @@ from schemas.schemas import PromptData
 router = APIRouter()
 
 
-@router.post("/analyze", tags=['Mood'])
+@router.post("/analyze", tags=['Mood'], response_model=MoodAnalyzeResponse)
 async def analyze(prompt: PromptRequest):
     return await analyze_mood(prompt.text)
 
 
-@router.post("/analyze-and-recommend", tags=['Mood'])
+@router.post("/analyze-and-recommend", tags=['Mood'], response_model=MoodAnalyzeRecommendResponse)
 async def analyze_and_recommend(
         data: PromptData,
         provider: ProviderEnum = Query(..., description="Music recommendation service")

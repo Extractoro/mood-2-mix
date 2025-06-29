@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, HttpUrl
 
 
 class PromptRequest(BaseModel):
@@ -41,3 +41,64 @@ class TrackData(BaseModel):
 class PlaylistAddition(BaseModel):
     playlist_id: str = Field(..., min_length=1, max_length=100)
     track_list: list[TrackData]
+
+
+class MoodAnalyzeResponse(BaseModel):
+    mood: str
+    valence: float
+    energy: float
+    genres: list[str]
+    query: str
+
+
+class MoodAnalyzeRecommendResponse(BaseModel):
+    mood: MoodAnalyzeResponse
+    tracks: list[TrackData]
+
+
+class RecommendResponse(BaseModel):
+    mood: MoodAnalyzeResponse
+    tracks: list[TrackData]
+
+
+class SpotifyAuthLinkResponse(BaseModel):
+    url: str
+
+
+class SpotifyCallbackResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    expires_in: int
+    scope: str
+    user_id: str
+    display_name: str
+
+
+class ExternalUrls(BaseModel):
+    spotify: HttpUrl
+
+
+class Playlist(BaseModel):
+    collaborative: bool
+    description: str
+    external_urls: ExternalUrls
+    href: HttpUrl
+    id: str
+    name: str
+    type: str
+    uri: str
+    public: bool
+    snapshot_id: str
+
+
+class PlaylistCreationResponse(BaseModel):
+    playlist: Playlist
+
+
+class PlaylistAdditionResponse(BaseModel):
+    snapshot_id: str
+
+
+class PlaylistPromptToPlaylistResponse(BaseModel):
+    detail: str
+    playlist_url: HttpUrl
